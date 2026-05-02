@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Who&apos;s That Pokémon?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --poke-yellow: #FFCB05;
+      --poke-blue:   #2F6DB5;
+      --poke-red:    #E3350D;
+      --poke-light:  #4FC3F7;
+      --poke-dark:   #103F91;
+      --poke-text:   #FFFFFF;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Trebuchet MS", "Verdana", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, #ffffff 0, var(--poke-light) 45%, var(--poke-blue) 100%);
+      color: var(--poke-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    #app {
+      max-width: 900px;
+      width: 100%;
+      padding: 16px;
+    }
+
+    .card {
+      background: rgba(16, 63, 145, 0.9);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin: 0 0 16px;
+      color: var(--poke-yellow);
+      text-shadow: 4px 4px 0 var(--poke-blue), 0 0 10px #000000;
+      letter-spacing: 1px;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      text-shadow: 2px 2px 0 var(--poke-dark);
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      margin: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--poke-text);
+      background: var(--poke-red);
+      box-shadow: 0 4px 0 #801b0a;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #801b0a;
+    }
+
+    .btn-secondary {
+      background: var(--poke-blue);
+      box-shadow: 0 4px 0 #143568;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 2px solid var(--poke-yellow);
+      box-shadow: none;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 24px;
+    }
+
+    .menu-buttons button {
+      width: 70%;
+      max-width: 260px;
+    }
+
+    label {
+      display: block;
+      margin: 8px 0 4px;
+      font-weight: bold;
+    }
+
+    select,
+    input[type="text"],
+    input[type="range"] {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    #customizeForm {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    #gameLayout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      #gameLayout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #silhouetteContainer {
+      position: relative;
+      background: radial-gradient(circle at center, #ffffff 0, #ff7b00 40%, #e3350d 100%);
+      border-radius: 16px;
+      border: 4px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      min-height: 260px;
+      overflow: hidden;
+    }
+
+    #pokemonImage {
+      max-width: 100%;
+      max-height: 240px;
+      image-rendering: pixelated;
+      transition: filter 0.4s ease, transform 0.4s ease;
+    }
+
+    .silhouette {
+      filter: brightness(0) saturate(100%);
+      transform: scale(1.05);
+    }
+
+    #sidePanel {
+      background: rgba(4,25,66,0.8);
+      border-radius: 16px;
+      padding: 12px 14px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+
+    #hintText {
+      margin-top: 8px;
+      min-height: 22px;
+      font-style: italic;
+    }
+
+    #feedbackText {
+      margin-top: 8px;
+      min-height: 22px;
+    }
+
+    .type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-right: 4px;
+      margin-top: 4px;
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.18);
+    }
+
+    #answerRow {
+      margin-top: 16px;
+    }
+
+    #answerInput {
+      margin-bottom: 8px;
+    }
+
+    #footerNote {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      opacity: 0.8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="card">
+
+    <!-- MENU SCREEN -->
+    <section id="menuScreen" class="screen active">
+      <h1>Who&apos;s That Pokémon?</h1>
+      <div class="center">
+        <p style="max-width: 520px; margin: 0 auto;">
+          Guess the Pokémon from its silhouette! Earn +2 points for a clean guess and +1 if you use a hint.
+        </p>
+      </div>
+      <div class="menu-buttons">
+        <button id="btnMenuStart">Start</button>
+        <button id="btnMenuCustomize" class="btn-secondary">Customize</button>
+        <button id="btnMenuExit" class="btn-ghost">Exit</button>
+      </div>
+      <div id="footerNote">
+        Pokédex data loaded from local pokedex_full.json (all generations 1–9).
+      </div>
+    </section>
+
+    <!-- CUSTOMIZE SCREEN -->
+    <section id="customizeScreen" class="screen">
+      <h2>Customize</h2>
+      <form id="customizeForm" onsubmit="return false;">
+
+        <label for="volumeRange">Music volume</label>
+        <input type="range" id="volumeRange" min="0" max="100" step="1">
+
+        <label for="generationSelect">Pokémon generation</label>
+        <select id="generationSelect">
+          <option value="0">All generations (1–9)</option>
+          <option value="1">Generation 1 (Kanto)</option>
+          <option value="2">Generation 2 (Johto)</option>
+          <option value="3">Generation 3 (Hoenn)</option>
+          <option value="4">Generation 4 (Sinnoh)</option>
+          <option value="5">Generation 5 (Unova)</option>
+          <option value="6">Generation 6 (Kalos)</option>
+          <option value="7">Generation 7 (Alola)</option>
+          <option value="8">Generation 8 (Galar/Hisui)</option>
+          <option value="9">Generation 9 (Paldea)</option>
+        </select>
+
+        <div class="center" style="margin-top: 12px;">
+          <button id="btnCustomizeBack" class="btn-secondary">Back</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section id="gameScreen" class="screen">
+      <h1>Who&apos;s That Pokémon?</h1>
+
+      <div id="gameLayout">
+        <!-- Left: silhouette -->
+        <div>
+          <div id="silhouetteContainer">
+            <img id="pokemonImage" src="" alt="Pokémon silhouette">
+          </div>
+          <div id="hintText"></div>
+          <div id="feedbackText"></div>
+
+          <div id="answerRow">
+            <input type="text" id="answerInput" placeholder="Enter Pokémon name">
+            <div class="center">
+              <button id="btnGo" disabled>Go!</button>
+              <button id="btnHint" class="btn-secondary">Hint</button>
+              <button id="btnGiveUp" class="btn-ghost">Give up?</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: stats and settings -->
+        <div id="sidePanel">
+          <div class="stat-row">
+            <span>Score</span>
+            <span id="scoreText">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Streak</span>
+            <span id="streakText">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Best streak</span>
+            <span id="bestStreakText">0</span>
+          </div>
+          <div class="stat-row">
+            <span>Timer</span>
+            <span id="timerText">∞</span>
+          </div>
+          <hr style="border-color: rgba(255,255,255,0.25); margin: 10px 0;">
+          <div class="stat-row">
+            <span>Generation</span>
+            <span id="currentGenText">All</span>
+          </div>
+          <div class="stat-row">
+            <span>Current</span>
+            <span id="currentNameMask">???</span>
+          </div>
+          <div id="currentTypesRow" style="margin-top: 4px;"></div>
+
+          <div class="center" style="margin-top: 10px;">
+            <button id="btnNext" class="btn-secondary">Skip / Next</button>
+            <button id="btnGameBack" class="btn-ghost">Menu</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- BGM: audio file must be in the same folder as index.html -->
+<audio id="bgm" src="pokemon_sound.mp3" loop></audio>
+
+<script>
+  // -------- CONFIG: data & sprite sources --------
+  const POKEDEX_JSON_URL = "pokedex_full.json"; // same folder as this HTML
+  const SPRITE_BASE_URL =
+    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/";
+
+  const PER_POKEMON_SECONDS = 25;
+
+  // -------- State --------
+  const settings = {
+    generation: 0,  // 0 = All, 1–9
+    volume: 0.8     // 0.0–1.0
+  };
+
+  let pokedex = [];
+  let filteredPool = [];
+  let current = null;
+  let hintUsed = false;
+  let score = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let timerId = null;
+  let timeLeft = null;
+  let dataLoaded = false;
+
+  // -------- Elements --------
+  const menuScreen = document.getElementById("menuScreen");
+  const customizeScreen = document.getElementById("customizeScreen");
+  const gameScreen = document.getElementById("gameScreen");
+
+  const btnMenuStart = document.getElementById("btnMenuStart");
+  const btnMenuCustomize = document.getElementById("btnMenuCustomize");
+  const btnMenuExit = document.getElementById("btnMenuExit");
+
+  const volumeRange = document.getElementById("volumeRange");
+  const generationSelect = document.getElementById("generationSelect");
+  const btnCustomizeBack = document.getElementById("btnCustomizeBack");
+
+  const pokemonImage = document.getElementById("pokemonImage");
+  const hintText = document.getElementById("hintText");
+  const feedbackText = document.getElementById("feedbackText");
+  const answerInput = document.getElementById("answerInput");
+  const btnGo = document.getElementById("btnGo");
+  const btnHint = document.getElementById("btnHint");
+  const btnGiveUp = document.getElementById("btnGiveUp");
+  const btnNext = document.getElementById("btnNext");
+  const btnGameBack = document.getElementById("btnGameBack");
+
+  const scoreText = document.getElementById("scoreText");
+  const streakText = document.getElementById("streakText");
+  const bestStreakText = document.getElementById("bestStreakText");
+  const timerText = document.getElementById("timerText");
+  const currentGenText = document.getElementById("currentGenText");
+  const currentNameMask = document.getElementById("currentNameMask");
+  const currentTypesRow = document.getElementById("currentTypesRow");
+
+  const bgm = document.getElementById("bgm");
+
+  // -------- Utility helpers --------
+  function showScreen(id) {
+    [menuScreen, customizeScreen, gameScreen].forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function sanitizeName(str) {
+    return (str || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9♀♂]/g, "");
+  }
+
+  function generationLabel(gen) {
+    switch (gen) {
+      case 1: return "Gen 1 – Kanto";
+      case 2: return "Gen 2 – Johto";
+      case 3: return "Gen 3 – Hoenn";
+      case 4: return "Gen 4 – Sinnoh";
+      case 5: return "Gen 5 – Unova";
+      case 6: return "Gen 6 – Kalos";
+      case 7: return "Gen 7 – Alola";
+      case 8: return "Gen 8 – Galar/Hisui";
+      case 9: return "Gen 9 – Paldea";
+      default: return "All generations (1–9)";
+    }
+  }
+
+  function maskName(name) {
+    return (name || "").replace(/[A-Za-z]/g, "?");
+  }
+
+  function setBgmVolume(vol) {
+    if (!bgm) return;
+    // audio.volume expects 0.0–1.0 [web:162][web:166]
+    bgm.volume = Math.min(1, Math.max(0, vol));
+  }
+
+  function loadSettingsFromStorage() {
+    try {
+      const raw = localStorage.getItem("wtp_settings");
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (typeof saved.generation === "number") settings.generation = saved.generation;
+      if (typeof saved.volume === "number") settings.volume = saved.volume;
+    } catch (e) {
+      console.warn("Could not load settings:", e);
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem("wtp_settings", JSON.stringify(settings));
+    } catch (e) {
+      console.warn("Could not save settings:", e);
+    }
+  }
+
+  function startTimer() {
+    if (!PER_POKEMON_SECONDS) {
+      timerText.textContent = "∞";
+      return;
+    }
+    if (timerId) clearInterval(timerId);
+    timeLeft = PER_POKEMON_SECONDS;
+    timerText.textContent = timeLeft + "s";
+    timerId = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        timerText.textContent = "0s";
+        handleTimeout();
+      } else {
+        timerText.textContent = timeLeft + "s";
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  // -------- Data loading from local JSON --------
+  async function ensurePokedexLoaded() {
+    if (dataLoaded) return;
+
+    const res = await fetch(POKEDEX_JSON_URL);
+    if (!res.ok) {
+      throw new Error("Failed to load pokedex_full.json");
+    }
+    const raw = await res.json();
+
+    // JSON entries like: { id, ndex, name, types, generation }
+    pokedex = raw;
+    dataLoaded = true;
+    applyGenerationFilter();
+  }
+
+  function applyGenerationFilter() {
+    filteredPool = pokedex.filter(p =>
+      settings.generation === 0 || p.generation === settings.generation
+    );
+  }
+
+  // -------- Game logic --------
+  function nextPokemon() {
+    if (!filteredPool.length) {
+      feedbackText.textContent = "No Pokémon found for this generation filter.";
+      hintText.textContent = "";
+      pokemonImage.src = "";
+      pokemonImage.classList.remove("silhouette");
+      btnGo.disabled = true;
+      btnHint.disabled = true;
+      btnGiveUp.disabled = true;
+      return;
+    }
+
+    hintUsed = false;
+    stopTimer();
+    feedbackText.textContent = "";
+    hintText.textContent = "";
+    answerInput.value = "";
+    btnGo.disabled = true;
+    btnHint.disabled = false;
+    btnGiveUp.disabled = false;
+
+    current = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+
+    const spriteUrl = SPRITE_BASE_URL + current.id + ".png";
+    pokemonImage.classList.add("silhouette");
+    pokemonImage.src = spriteUrl;
+
+    currentNameMask.textContent = maskName(current.name);
+    currentTypesRow.innerHTML = "";
+    current.types.forEach(t => {
+      const span = document.createElement("span");
+      span.className = "type-badge";
+      span.textContent = t;
+      currentTypesRow.appendChild(span);
+    });
+
+    startTimer();
+  }
+
+  function updateMetaDisplay() {
+    scoreText.textContent = score;
+    streakText.textContent = streak;
+    bestStreakText.textContent = bestStreak;
+    currentGenText.textContent = generationLabel(settings.generation);
+  }
+
+  function onAnswerInput() {
+    btnGo.disabled = !answerInput.value.trim();
+  }
+
+  function checkAnswer() {
+    if (!current) return;
+    const user = sanitizeName(answerInput.value);
+    const correct = sanitizeName(current.name);
+
+    if (!user) return;
+
+    if (user === correct) {
+      const gain = hintUsed ? 1 : 2;
+      score += gain;
+      streak += 1;
+      if (streak > bestStreak) bestStreak = streak;
+      feedbackText.textContent = `Correct! It was ${current.name} (+${gain}).`;
+      pokemonImage.classList.remove("silhouette");
+      answerInput.value = "";
+      btnGo.disabled = true;
+      btnHint.disabled = true;
+      btnGiveUp.disabled = false;
+      stopTimer();
+      updateMetaDisplay();
+      setTimeout(nextPokemon, 1500);
+    } else {
+      streak = 0;
+      feedbackText.textContent = "Not quite, try again!";
+      updateMetaDisplay();
+    }
+  }
+
+  function showHint() {
+    if (!current || hintUsed) return;
+    hintUsed = true;
+    const genLabel = generationLabel(current.generation);
+    const typeText = current.types.join(" / ");
+    // Ndex + generation + typing
+    hintText.textContent = `${current.ndex} – ${genLabel} – ${typeText}`;
+  }
+
+  function giveUp() {
+    if (!current) return;
+    streak = 0;
+    feedbackText.textContent = `You gave up! It was ${current.name}.`;
+    pokemonImage.classList.remove("silhouette");
+    updateMetaDisplay();
+    stopTimer();
+    setTimeout(nextPokemon, 1500);
+  }
+
+  function handleTimeout() {
+    if (!current) return;
+    streak = 0;
+    feedbackText.textContent = `Time's up! It was ${current.name}.`;
+    pokemonImage.classList.remove("silhouette");
+    updateMetaDisplay();
+    setTimeout(nextPokemon, 1500);
+  }
+
+  // -------- Event wiring --------
+  btnMenuStart.addEventListener("click", async () => {
+    btnMenuStart.disabled = true;
+    feedbackText.textContent = "Loading Pokédex data…";
+    try {
+      await ensurePokedexLoaded();
+    } catch (e) {
+      feedbackText.textContent = "Failed to load Pokédex data. Ensure pokedex_full.json is next to this HTML.";
+      console.error(e);
+      btnMenuStart.disabled = false;
+      return;
+    }
+    applyGenerationFilter();
+    updateMetaDisplay();
+    showScreen("gameScreen");
+    btnMenuStart.disabled = false;
+
+    // Start BGM on first Start click (user interaction allows autoplay on most browsers).
+    setBgmVolume(settings.volume);
+    bgm.play().catch(() => {
+      // Autoplay might be blocked; user can toggle play via browser controls if needed.
+    });
+
+    nextPokemon();
+  });
+
+  btnMenuCustomize.addEventListener("click", () => {
+    volumeRange.value = Math.round(settings.volume * 100);
+    generationSelect.value = String(settings.generation);
+    showScreen("customizeScreen");
+  });
+
+  btnMenuExit.addEventListener("click", () => {
+    alert("Thanks for playing! You can close the tab any time.");
+  });
+
+  btnCustomizeBack.addEventListener("click", () => {
+    settings.volume = volumeRange.value / 100;
+    settings.generation = parseInt(generationSelect.value, 10) || 0;
+    saveSettings();
+    applyGenerationFilter();
+    setBgmVolume(settings.volume);
+    updateMetaDisplay();
+    showScreen("menuScreen");
+  });
+
+  btnGameBack.addEventListener("click", () => {
+    stopTimer();
+    showScreen("menuScreen");
+  });
+
+  btnGo.addEventListener("click", checkAnswer);
+  btnHint.addEventListener("click", showHint);
+  btnGiveUp.addEventListener("click", giveUp);
+  btnNext.addEventListener("click", () => {
+    streak = 0;
+    updateMetaDisplay();
+    nextPokemon();
+  });
+
+  answerInput.addEventListener("input", onAnswerInput);
+  answerInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !btnGo.disabled) {
+      checkAnswer();
+    }
+  });
+
+  volumeRange.addEventListener("input", () => {
+    const v = volumeRange.value / 100;
+    settings.volume = v;
+    setBgmVolume(v);
+  });
+
+  // -------- Init --------
+  loadSettingsFromStorage();
+  setBgmVolume(settings.volume);
+  updateMetaDisplay();
+</script>
+</body>
+</html>
