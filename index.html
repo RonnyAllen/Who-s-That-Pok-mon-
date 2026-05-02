@@ -423,7 +423,7 @@
 
   function setBgmVolume(vol) {
     if (!bgm) return;
-    bgm.volume = Math.min(1, Math.max(0, vol));
+    bgm.volume = Math.min(1, Math.max(0, vol)); // 0.0–1.0 [web:162][web:166]
   }
 
   function loadSettingsFromStorage() {
@@ -555,24 +555,27 @@
     setTimeout(nextPokemon, 1500);
   }
 
-  // -------- BGM autoplay logic --------
+  // --- BGM autoplay & fallback ---
   function tryStartBgm() {
+    if (!bgm) return;
     setBgmVolume(settings.volume);
-    bgm.play().catch(() => {
-      // If autoplay blocked, start on first user interaction.
-      const resume = () => {
-        bgm.play().catch(() => {});
-        document.body.removeEventListener("click", resume);
-      };
-      document.body.addEventListener("click", resume, { once: true });
-    });
+    if (!bgm.paused) return;
+    bgm.play().catch(() => {});
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     loadSettingsFromStorage();
     setBgmVolume(settings.volume);
     updateMetaDisplay();
-    tryStartBgm();
+
+    // Start BGM on first user gesture anywhere on the page.
+    const resume = () => {
+      tryStartBgm();
+      document.body.removeEventListener("click", resume);
+      document.body.removeEventListener("touchstart", resume);
+    };
+    document.body.addEventListener("click", resume, { once: true });
+    document.body.addEventListener("touchstart", resume, { once: true });
   });
 
   // -------- Event wiring --------
@@ -591,6 +594,10 @@
     updateMetaDisplay();
     showScreen("gameScreen");
     btnMenuStart.disabled = false;
+
+    // Ensure BGM is playing when the player hits Start.
+    tryStartBgm();
+
     nextPokemon();
   });
 
